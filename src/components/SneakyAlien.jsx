@@ -75,6 +75,7 @@ export default function SneakyAlien({ isDarkMode }) {
   return (
     <>
       <div 
+        className="hide-on-mobile"
         ref={alienRef}
         onClick={() => setIsPlaying(true)}
         style={{
