@@ -5,13 +5,12 @@ import DoodleAvatar from './DoodleAvatar';
 import { db } from '../firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 
-export default function Leaderboard({ profileName, avatarParams, userSyllabusPoints }) {
+export default function Leaderboard({ profileName, avatarParams, userSyllabusPoints, deviceId }) {
   const [filterMode, setFilterMode] = useState('syllabus');
   const [globalData, setGlobalData] = useState([]);
   const listRef = useRef(null);
   const statsRef = useRef(null);
 
-  const localDeviceId = localStorage.getItem('exam_helper_device_id');
   const gameHighScore = parseInt(localStorage.getItem('spaceShooterHighScore') || '0', 10);
 
   useEffect(() => {
@@ -29,7 +28,7 @@ export default function Leaderboard({ profileName, avatarParams, userSyllabusPoi
 
   // Merge global data with local immediate state to prevent lag
   const currentUserObj = {
-    id: localDeviceId || 'me',
+    id: deviceId || 'me',
     name: profileName,
     points: userSyllabusPoints,
     gameScore: gameHighScore,
@@ -38,7 +37,7 @@ export default function Leaderboard({ profileName, avatarParams, userSyllabusPoi
   };
 
   let mergedData = [...globalData];
-  const userIndex = mergedData.findIndex(u => u.id === localDeviceId);
+  const userIndex = mergedData.findIndex(u => u.id === deviceId);
   if (userIndex !== -1) {
     mergedData[userIndex] = {
       ...mergedData[userIndex],

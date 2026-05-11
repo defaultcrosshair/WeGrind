@@ -27,8 +27,24 @@ import CanvasBackground from './components/CanvasBackground';
 import SneakyAlien from './components/SneakyAlien';
 import ProfileMenu from './components/ProfileMenu';
 import { sepmSyllabusData } from './data/sepmData';
-import { db } from './firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from './firebase';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+
+const ADJECTIVES = ["Sleepy", "Hyper", "Caffeinated", "Lazy", "Genius", "Panicking", "Creative", "Bored", "Hacking"];
+const NOUNS = ["Coder", "Student", "Scholar", "Ninja", "Doodle", "T-Rex", "Master", "Wizard", "Debug"];
+
+const getRandomProfile = () => {
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  return `${adj} ${noun}`;
+};
+
+const getRandomAvatar = () => ({
+  eyeIndex: Math.floor(Math.random() * 11),
+  mouthIndex: Math.floor(Math.random() * 9),
+  hatIndex: Math.floor(Math.random() * 13)
+});
 
 const initialSubjectsData = [
   {
@@ -185,13 +201,17 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentCourseIndex, setCurrentCourseIndex] = useState(0);
   
-  const [courses, setCourses] = useState([
-    { id: 'c1', name: 'Data Science', units: initialSubjectsData },
-    { id: 'c2', name: 'SEPM', units: sepmSyllabusData },
-    { id: 'c3', name: 'Compiler Design', units: [
-      { id: 'cd_u1', name: 'Syllabus Coming Soon...', progress: 0, modules: [] }
-    ]}
-  ]);
+  const [courses, setCourses] = useState(() => {
+    const saved = localStorage.getItem('eh_courses');
+    if (saved) return JSON.parse(saved);
+    return [
+      { id: 'c1', name: 'Data Science', units: initialSubjectsData },
+      { id: 'c2', name: 'SEPM', units: sepmSyllabusData },
+      { id: 'c3', name: 'Compiler Design', units: [
+        { id: 'cd_u1', name: 'Syllabus Coming Soon...', progress: 0, modules: [] }
+      ]}
+    ];
+  });
 
   const [showTimer, setShowTimer] = useState(true);
   
@@ -199,8 +219,23 @@ export default function App() {
   
   const [isDarkMode, setIsDarkMode] = useState(false);
   
-  const [profileName, setProfileName] = useState("Sleepy Coder");
-  const [avatarParams, setAvatarParams] = useState({ eyeIndex: 0, mouthIndex: 0, hatIndex: 0 });
+  const [profileName, setProfileName] = useState(() => {
+    return localStorage.getItem('eh_profileName') || getRandomProfile();
+  });
+  const [avatarParams, setAvatarParams] = useState(() => {
+    const saved = localStorage.getItem('eh_avatar');
+    return saved ? JSON.parse(saved) : getRandomAvatar();
+  });
+  
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    if (!currentUser) {
+      localStorage.setItem('eh_profileName', profileName);
+      localStorage.setItem('eh_avatar', JSON.stringify(avatarParams));
+      localStorage.setItem('eh_courses', JSON.stringify(courses));
+    }
+  }, [profileName, avatarParams, courses, currentUser]);
   
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
@@ -291,14 +326,39 @@ export default function App() {
 
   const [deviceId, setDeviceId] = useState('');
 
-  // Generate anonymous device ID
+  // Generate anonymous device ID and handle Auth state
   useEffect(() => {
-    let id = localStorage.getItem('exam_helper_device_id');
-    if (!id) {
-      id = 'user_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-      localStorage.setItem('exam_helper_device_id', id);
-    }
-    setDeviceId(id);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        setDeviceId(user.uid);
+        try {
+          const docRef = doc(db, 'leaderboard', user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.name) setProfileName(data.name);
+            if (data.avatarParams) setAvatarParams(data.avatarParams);
+            if (data.courses) setCourses(data.courses);
+          }
+        } catch (e) {}
+      } else {
+        let id = localStorage.getItem('exam_helper_device_id');
+        if (!id) {
+          id = 'user_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+          localStorage.setItem('exam_helper_device_id', id);
+        }
+        setDeviceId(id);
+        
+        const savedName = localStorage.getItem('eh_profileName');
+        if (savedName) setProfileName(savedName);
+        const savedAvatar = localStorage.getItem('eh_avatar');
+        if (savedAvatar) setAvatarParams(JSON.parse(savedAvatar));
+        const savedCourses = localStorage.getItem('eh_courses');
+        if (savedCourses) setCourses(JSON.parse(savedCourses));
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   const gameHighScore = parseInt(localStorage.getItem('spaceShooterHighScore') || '0', 10);
@@ -306,6 +366,7 @@ export default function App() {
   // Silent Background Sync to Leaderboard
   useEffect(() => {
     if (!deviceId || !profileName) return;
+    if (!currentUser) return; // Only save to leaderboard if logged in
     
     try {
       const userRef = doc(db, 'leaderboard', deviceId);
@@ -315,19 +376,20 @@ export default function App() {
         points: userSyllabusPoints,
         gameScore: gameHighScore,
         avatarParams: avatarParams,
+        courses: courses,
         lastActive: serverTimestamp()
       }, { merge: true });
     } catch (e) {
       // Fail silently
     }
-  }, [deviceId, profileName, userSyllabusPoints, gameHighScore, avatarParams]);
+  }, [deviceId, profileName, userSyllabusPoints, gameHighScore, avatarParams, courses, currentUser]);
 
   const renderContent = () => {
     switch(activeTab) {
       case 'dashboard': return <Dashboard subjects={currentCourse.units} toggleTopic={toggleTopic} />;
       case 'leaderboard': return (
         <ErrorBoundary>
-          <Leaderboard profileName={profileName} avatarParams={avatarParams} userSyllabusPoints={userSyllabusPoints} />
+          <Leaderboard profileName={profileName} avatarParams={avatarParams} userSyllabusPoints={userSyllabusPoints} deviceId={deviceId} />
         </ErrorBoundary>
       );
       case 'resources': return <Resources />;
