@@ -515,7 +515,7 @@ export default function App() {
       }}>
         <p style={{ marginBottom: '0.25rem' }}>⚠️ <strong>Disclaimer:</strong> Verify with official materials.</p>
         <p style={{ marginBottom: '0.25rem' }}>© {new Date().getFullYear()} WeGrind.</p>
-        <p style={{ pointerEvents: 'auto' }}>Built by <a href="https://github.com/harsh" target="_blank" rel="noreferrer" style={{ color: 'var(--text-primary)', textDecoration: 'underline', fontWeight: '800' }}>@harsh</a></p>
+        <p style={{ pointerEvents: 'auto' }}>Built by <a href="https://github.com/defaultcrosshair" target="_blank" rel="noreferrer" style={{ color: 'var(--text-primary)', textDecoration: 'underline', fontWeight: '800' }}>@defaultcrosshair</a></p>
       </div>
 
     </div>
