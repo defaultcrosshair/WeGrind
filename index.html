@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeGrind.</title>
+  </head>
+  <body>
+    <div id="global-error" style="display:none; padding: 2rem; color: red; background: white; position: absolute; z-index: 9999; top: 0; left: 0; right: 0; bottom: 0;"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.getElementById('global-error').style.display = 'block';
+        document.getElementById('global-error').innerHTML = `<h1>Global Crash:</h1><pre>${e.error ? e.error.stack : e.message}</pre>`;
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        document.getElementById('global-error').style.display = 'block';
+        document.getElementById('global-error').innerHTML = `<h1>Promise Crash:</h1><pre>${e.reason ? e.reason.stack : e.reason}</pre>`;
+      });
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
