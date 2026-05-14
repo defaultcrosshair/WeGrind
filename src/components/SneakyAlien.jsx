@@ -59,17 +59,29 @@ export default function SneakyAlien({ isDarkMode }) {
     if (!alienRef.current) return;
     const eyes = alienRef.current.querySelectorAll('.alien-eye');
     let timeoutId;
+    let blinkTween;
+
+    // Ensure eyes start fully open (fixes squished eyes on revisit)
+    gsap.set(eyes, { scaleY: 1 });
     
     const blink = () => {
       // Fast open and close blink
-      gsap.to(eyes, { scaleY: 0.1, duration: 0.1, yoyo: true, repeat: 1 });
+      blinkTween = gsap.to(eyes, { scaleY: 0.1, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
+        // Guarantee eyes are fully open after blink completes
+        gsap.set(eyes, { scaleY: 1 });
+      }});
       
       const nextBlink = Math.random() * 4000 + 2000; 
       timeoutId = setTimeout(blink, nextBlink);
     };
     
     timeoutId = setTimeout(blink, 3000);
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      if (blinkTween) blinkTween.kill();
+      // Reset eyes to fully open on unmount
+      gsap.set(eyes, { scaleY: 1 });
+    };
   }, []);
 
   return (

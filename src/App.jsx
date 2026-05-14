@@ -14,19 +14,24 @@ import {
   ChevronLeft,
   ChevronRight,
   Sun,
-  Moon
+  Moon,
+  Layers,
+  Monitor
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Leaderboard from './components/Rankboard';
+import Flashcards from './components/Flashcards';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Resources from './components/Resources';
 import Forum from './components/Forum';
+import QuickNotes from './components/QuickNotes';
 import ProgressRing from './components/ProgressRing';
 import Celebration from './components/Celebration';
 import CanvasBackground from './components/CanvasBackground';
 import SneakyAlien from './components/SneakyAlien';
 import ProfileMenu from './components/ProfileMenu';
 import { sepmSyllabusData } from './data/sepmData';
+import { compilerDesignSyllabusData } from './data/compilerDesignData';
 import { db, auth } from './firebase';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -58,34 +63,34 @@ const initialSubjectsData = [
         topics: [
           { id: 'u1_m1_t1', name: 'Benefits and uses of Data Science.', completed: false },
           { id: 'u1_m1_t2', name: 'Big Data vs. Data Science.', completed: false },
-          { id: 'u1_m1_t3', name: 'The Data Science Process', completed: false }
+          { id: 'u1_m1_t3', name: 'The Data Science Process', completed: false, important: true }
         ]
       },
       {
         id: 'm2',
         name: 'Facets of Data',
         topics: [
-          { id: 'u1_m2_t1', name: 'Structured vs Unstructured data', completed: false },
-          { id: 'u1_m2_t2', name: 'Natural Language & NLP', completed: false },
-          { id: 'u1_m2_t3', name: 'Machine-generated & Graph data', completed: false },
-          { id: 'u1_m2_t4', name: 'Audio, Video, and Images.', completed: false },
-          { id: 'u1_m2_t5', name: 'Streaming data.', completed: false }
+          { id: 'u1_m2_t1', name: 'Structured vs Unstructured data', completed: false, important: true },
+          { id: 'u1_m2_t2', name: 'Natural Language & NLP', completed: false, important: true },
+          { id: 'u1_m2_t3', name: 'Machine-generated & Graph data', completed: false, important: true },
+          { id: 'u1_m2_t4', name: 'Audio, Video, and Images.', completed: false, important: true },
+          { id: 'u1_m2_t5', name: 'Streaming data.', completed: false, important: true }
         ]
       },
       {
         id: 'm3',
         name: 'Data Acquisition',
         topics: [
-          { id: 'u1_m3_t1', name: 'Web APIs and Open Data Sources', completed: false },
-          { id: 'u1_m3_t2', name: 'Web Scraping', completed: false }
+          { id: 'u1_m3_t1', name: 'Web APIs and Open Data Sources', completed: false, important: true },
+          { id: 'u1_m3_t2', name: 'Web Scraping', completed: false, important: true }
         ]
       },
       {
         id: 'm4',
         name: 'NumPy Computing',
         topics: [
-          { id: 'u1_m4_t1', name: 'NumPy ndarray features & creation', completed: false },
-          { id: 'u1_m4_t2', name: 'Array shape manipulation & Indexing', completed: false },
+          { id: 'u1_m4_t1', name: 'NumPy ndarray features & creation', completed: false, important: true },
+          { id: 'u1_m4_t2', name: 'Array shape manipulation & Indexing', completed: false, important: true },
           { id: 'u1_m4_t3', name: 'Array operations and Vectorization', completed: false }
         ]
       },
@@ -93,10 +98,10 @@ const initialSubjectsData = [
         id: 'm5',
         name: 'Pandas Manipulation',
         topics: [
-          { id: 'u1_m5_t1', name: 'Series and DataFrames', completed: false },
-          { id: 'u1_m5_t2', name: 'Indexing, Selection, & Dropping', completed: false },
+          { id: 'u1_m5_t1', name: 'Series and DataFrames', completed: false, important: true },
+          { id: 'u1_m5_t2', name: 'Indexing, Selection, & Dropping', completed: false, important: true },
           { id: 'u1_m5_t3', name: 'Sorting, Ranking, & NaN handling', completed: false },
-          { id: 'u1_m5_t4', name: 'Summary Statistics & Index Hierarchy', completed: false }
+          { id: 'u1_m5_t4', name: 'Summary Statistics & Index Hierarchy', completed: false, important: true }
         ]
       }
     ]
@@ -110,9 +115,9 @@ const initialSubjectsData = [
         id: 'm6',
         name: 'Handling Large Datasets',
         topics: [
-          { id: 'u2_m6_t1', name: 'Online Learning vs Batch', completed: false },
-          { id: 'u2_m6_t2', name: 'MapReduce & Parallelization', completed: false },
-          { id: 'u2_m6_t3', name: 'Python tools (Dask, Numba, etc.)', completed: false }
+          { id: 'u2_m6_t1', name: 'Online Learning vs Batch', completed: false, important: true },
+          { id: 'u2_m6_t2', name: 'MapReduce & Parallelization', completed: false, important: true },
+          { id: 'u2_m6_t3', name: 'Python tools (Dask, Numba, etc.)', completed: false, important: true }
         ]
       },
       {
@@ -120,16 +125,16 @@ const initialSubjectsData = [
         name: 'Wrangling Process & Cleaning',
         topics: [
           { id: 'u2_m7_t1', name: 'Wrangling Steps & Use Cases', completed: false },
-          { id: 'u2_m7_t2', name: 'Handling Missing Data', completed: false },
-          { id: 'u2_m7_t3', name: 'Data Transformation & Strings', completed: false },
-          { id: 'u2_m7_t4', name: 'Discretization, Standardization, Outliers', completed: false }
+          { id: 'u2_m7_t2', name: 'Handling Missing Data', completed: false, important: true },
+          { id: 'u2_m7_t3', name: 'Data Transformation & Strings', completed: false, important: true },
+          { id: 'u2_m7_t4', name: 'Discretization, Standardization, Outliers', completed: false, important: true }
         ]
       },
       {
         id: 'm8',
         name: 'Merging & Reshaping',
         topics: [
-          { id: 'u2_m8_t1', name: 'Merging and Concatenating', completed: false },
+          { id: 'u2_m8_t1', name: 'Merging and Concatenating', completed: false, important: true },
           { id: 'u2_m8_t2', name: 'Pivoting, Melting, Stacking', completed: false }
         ]
       }
@@ -145,8 +150,8 @@ const initialSubjectsData = [
         name: 'Matplotlib',
         topics: [
           { id: 'u3_m10_t1', name: 'Pyplot, Figure, and Axes', completed: false },
-          { id: 'u3_m10_t2', name: 'Subplots & Controlling ticks/labels', completed: false },
-          { id: 'u3_m10_t3', name: 'Legends, Annotations, Saving plots', completed: false }
+          { id: 'u3_m10_t2', name: 'Subplots & Controlling ticks/labels', completed: false, important: true },
+          { id: 'u3_m10_t3', name: 'Legends, Annotations, Saving plots', completed: false, important: true }
         ]
       },
       {
@@ -154,14 +159,45 @@ const initialSubjectsData = [
         name: 'Seaborn & Plot Types',
         topics: [
           { id: 'u3_m11_t1', name: 'Seaborn styles and themes', completed: false },
-          { id: 'u3_m11_t2', name: 'Line, Scatter, Histograms, Boxplots', completed: false },
-          { id: 'u3_m11_t3', name: 'Pair Plots, Joint Plots, FacetGrid', completed: false },
-          { id: 'u3_m11_t4', name: '3D Plotting & Text Annotations', completed: false }
+          { id: 'u3_m11_t2', name: 'Line, Scatter, Histograms, Boxplots', completed: false, important: true },
+          { id: 'u3_m11_t3', name: 'Pair Plots, Joint Plots, FacetGrid', completed: false, important: true },
+          { id: 'u3_m11_t4', name: '3D Plotting & Text Annotations', completed: false, important: true }
         ]
       }
     ]
   }
 ];
+
+// Build a lookup map of topic ID -> important flag from all static course data
+const importantTopicIds = new Set();
+[initialSubjectsData, sepmSyllabusData, compilerDesignSyllabusData].forEach(units => {
+  if (!Array.isArray(units)) return;
+  units.forEach(unit => {
+    unit.modules?.forEach(module => {
+      module.topics?.forEach(topic => {
+        if (topic.important) importantTopicIds.add(topic.id);
+      });
+    });
+  });
+});
+
+// Merge the important flag from static data into loaded courses (from Firestore/localStorage)
+const mergeImportantFlags = (courses) => {
+  if (!Array.isArray(courses)) return courses;
+  return courses.map(course => ({
+    ...course,
+    units: course.units.map(unit => ({
+      ...unit,
+      modules: (unit.modules || []).map(module => ({
+        ...module,
+        topics: (module.topics || []).map(topic => ({
+          ...topic,
+          important: importantTopicIds.has(topic.id) || false
+        }))
+      }))
+    }))
+  }));
+};
 
 const EXAMS = [
   { courseId: 'c1', name: 'Data Science', date: new Date('2026-05-12T14:00:00+05:30'), start: new Date('2026-05-01T00:00:00+05:30') },
@@ -199,25 +235,38 @@ const calculateTimers = () => {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentCourseIndex, setCurrentCourseIndex] = useState(0);
+  const [currentCourseIndex, setCurrentCourseIndex] = useState(1);
   
+  const defaultCourses = [
+    { id: 'c1', name: 'Data Science', units: initialSubjectsData },
+    { id: 'c2', name: 'SEPM', units: sepmSyllabusData },
+    { id: 'c3', name: 'Compiler Design', units: compilerDesignSyllabusData }
+  ];
+
   const [courses, setCourses] = useState(() => {
     const saved = localStorage.getItem('eh_courses');
-    if (saved) return JSON.parse(saved);
-    return [
-      { id: 'c1', name: 'Data Science', units: initialSubjectsData },
-      { id: 'c2', name: 'SEPM', units: sepmSyllabusData },
-      { id: 'c3', name: 'Compiler Design', units: [
-        { id: 'cd_u1', name: 'Syllabus Coming Soon...', progress: 0, modules: [] }
-      ]}
-    ];
+    if (saved) {
+      let parsed = JSON.parse(saved);
+      // Force update Compiler Design if it doesn't have all 5 units
+      parsed = parsed.map(c => {
+        if (c.id === 'c3' && (!c.units || c.units.length < 5)) {
+          return { ...c, units: compilerDesignSyllabusData };
+        }
+        return c;
+      });
+      return mergeImportantFlags(parsed);
+    }
+    return defaultCourses;
   });
 
   const [showTimer, setShowTimer] = useState(true);
   
   const [examTimers, setExamTimers] = useState(calculateTimers());
   
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('eh_darkMode');
+    return saved === 'true';
+  });
   
   const [profileName, setProfileName] = useState(() => {
     return localStorage.getItem('eh_profileName') || getRandomProfile();
@@ -228,25 +277,28 @@ export default function App() {
   });
   
   const [currentUser, setCurrentUser] = useState(null);
+  
+  // Flag to prevent background sync from overwriting Firestore data before it's loaded
+  const [firestoreLoaded, setFirestoreLoaded] = useState(false);
 
   useEffect(() => {
-    if (!currentUser) {
-      localStorage.setItem('eh_profileName', profileName);
-      localStorage.setItem('eh_avatar', JSON.stringify(avatarParams));
-      localStorage.setItem('eh_courses', JSON.stringify(courses));
-    }
-  }, [profileName, avatarParams, courses, currentUser]);
+    localStorage.setItem('eh_profileName', profileName);
+    localStorage.setItem('eh_avatar', JSON.stringify(avatarParams));
+    localStorage.setItem('eh_courses', JSON.stringify(courses));
+  }, [profileName, avatarParams, courses]);
   
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('eh_darkMode', isDarkMode);
   }, [isDarkMode]);
-  
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showMobileWarning, setShowMobileWarning] = useState(false);
   const [hasCelebrated, setHasCelebrated] = useState(false);
   const contentRef = useRef(null);
 
   const navItems = [
     { id: 'dashboard', label: 'Checklist', icon: CheckSquare },
+    { id: 'flashcards', label: 'Flashcards', icon: Layers },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'resources', label: 'Resources', icon: FileText },
     { id: 'forum', label: 'Community', icon: MessageSquare },
@@ -276,6 +328,16 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Sync Timer to Document Title (Browser Tab)
+  useEffect(() => {
+    const timer = examTimers.find(t => t.courseId === currentCourse.id);
+    if (timer && !timer.isPast) {
+      document.title = `${timer.days}d ${timer.hours}h ${timer.minutes}m ${timer.seconds}s - WeGrind`;
+    } else {
+      document.title = "WeGrind - Exam Helper";
+    }
+  }, [examTimers, currentCourse.id]);
 
   // GSAP Tab Transition
   useEffect(() => {
@@ -326,23 +388,72 @@ export default function App() {
 
   const [deviceId, setDeviceId] = useState('');
 
-  // Generate anonymous device ID and handle Auth state
+  const gameHighScore = parseInt(localStorage.getItem('spaceShooterHighScore') || '0', 10);
+
+  // Handle Auth state and load/save user data from Firestore
   useEffect(() => {
+    if (window.innerWidth <= 768) {
+      setShowMobileWarning(true);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      setFirestoreLoaded(false); // Reset on auth change
+      
       if (user) {
         setDeviceId(user.uid);
         try {
           const docRef = doc(db, 'leaderboard', user.uid);
           const docSnap = await getDoc(docRef);
+
           if (docSnap.exists()) {
             const data = docSnap.data();
+            // Always restore profile from Firestore if available
             if (data.name) setProfileName(data.name);
             if (data.avatarParams) setAvatarParams(data.avatarParams);
-            if (data.courses) setCourses(data.courses);
+
+            // Always restore courses from Firestore if they exist and have content
+            if (Array.isArray(data.courses) && data.courses.length > 0) {
+              let parsedCourses = data.courses.map(c => {
+                if (c.id === 'c3' && (!c.units || c.units.length < 5)) {
+                  return { ...c, units: compilerDesignSyllabusData };
+                }
+                return c;
+              });
+              setCourses(mergeImportantFlags(parsedCourses));
+            }
+          } else {
+            // First-time user: save current local state to Firestore
+            const currentLocalCourses = JSON.parse(localStorage.getItem('eh_courses') || 'null');
+            const coursesToSave = Array.isArray(currentLocalCourses) && currentLocalCourses.length > 0
+              ? currentLocalCourses
+              : defaultCourses;
+            
+            await setDoc(docRef, {
+              id: user.uid,
+              name: profileName,
+              points: userSyllabusPoints,
+              gameScore: gameHighScore,
+              avatarParams,
+              courses: coursesToSave,
+              lastActive: serverTimestamp()
+            }, { merge: true });
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error('Failed to load or initialize user data from Firestore', e);
+        }
+        
+        // Mark Firestore as loaded so background sync can start
+        setFirestoreLoaded(true);
       } else {
+        // User logged out — clear saved course progress from localStorage
+        // so stale data doesn't get synced under an anonymous ID
+        localStorage.removeItem('eh_courses');
+        
+        // Reset to fresh default courses
+        setCourses(defaultCourses);
+        
+        // Generate/restore anonymous device ID
         let id = localStorage.getItem('exam_helper_device_id');
         if (!id) {
           id = 'user_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -350,43 +461,46 @@ export default function App() {
         }
         setDeviceId(id);
         
+        // Restore anonymous profile
         const savedName = localStorage.getItem('eh_profileName');
         if (savedName) setProfileName(savedName);
         const savedAvatar = localStorage.getItem('eh_avatar');
         if (savedAvatar) setAvatarParams(JSON.parse(savedAvatar));
-        const savedCourses = localStorage.getItem('eh_courses');
-        if (savedCourses) setCourses(JSON.parse(savedCourses));
+        
+        setFirestoreLoaded(true);
       }
     });
     return () => unsubscribe();
   }, []);
 
-  const gameHighScore = parseInt(localStorage.getItem('spaceShooterHighScore') || '0', 10);
-
-  // Silent Background Sync to Leaderboard
+  // Silent Background Sync to Leaderboard — only after Firestore data is loaded
   useEffect(() => {
-    if (!deviceId || !profileName) return;
-    if (!currentUser) return; // Only save to leaderboard if logged in
-    
-    try {
-      const userRef = doc(db, 'leaderboard', deviceId);
-      setDoc(userRef, {
-        id: deviceId,
-        name: profileName,
-        points: userSyllabusPoints,
-        gameScore: gameHighScore,
-        avatarParams: avatarParams,
-        courses: courses,
-        lastActive: serverTimestamp()
-      }, { merge: true });
-    } catch (e) {
-      // Fail silently
-    }
-  }, [deviceId, profileName, userSyllabusPoints, gameHighScore, avatarParams, courses, currentUser]);
+    if (!deviceId || !profileName || !firestoreLoaded) return;
+
+    const saveLeaderboard = async () => {
+      try {
+        const userRef = doc(db, 'leaderboard', deviceId);
+        await setDoc(userRef, {
+          id: deviceId,
+          name: profileName,
+          points: userSyllabusPoints,
+          gameScore: gameHighScore,
+          avatarParams: avatarParams,
+          courses: courses,
+          lastActive: serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.error('Leaderboard sync failed', e);
+      }
+    };
+
+    saveLeaderboard();
+  }, [deviceId, profileName, userSyllabusPoints, gameHighScore, avatarParams, courses, firestoreLoaded]);
 
   const renderContent = () => {
     switch(activeTab) {
       case 'dashboard': return <Dashboard subjects={currentCourse.units} toggleTopic={toggleTopic} />;
+      case 'flashcards': return <Flashcards />;
       case 'leaderboard': return (
         <ErrorBoundary>
           <Leaderboard profileName={profileName} avatarParams={avatarParams} userSyllabusPoints={userSyllabusPoints} deviceId={deviceId} />
@@ -403,17 +517,32 @@ export default function App() {
       <CanvasBackground isDarkMode={isDarkMode} />
       <SneakyAlien isDarkMode={isDarkMode} />
       {showCelebration && <Celebration onComplete={() => setShowCelebration(false)} />}
+      <QuickNotes />
       
       <aside className="sidebar">
-        <div className="sidebar-logo" style={{ paddingBottom: '1rem' }}>
+        <div className="sidebar-logo" style={{ paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: 'var(--text-primary)', fontWeight: '900', fontFamily: 'Outfit', fontSize: '2.5rem', letterSpacing: '-1px' }}>WeGrind.</span>
+          
+          {/* Mobile User Profile */}
+          <div className="user-profile mobile-only" style={{ display: 'none', gap: '0.75rem' }}>
+            <button className="btn-icon" onClick={() => setIsDarkMode(!isDarkMode)} style={{ width: '36px', height: '36px' }}>
+              {isDarkMode ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
+            </button>
+            <ProfileMenu 
+              profileName={profileName} 
+              setProfileName={setProfileName}
+              avatarParams={avatarParams} 
+              setAvatarParams={setAvatarParams} 
+              small={true}
+            />
+          </div>
         </div>
         
         <nav className="nav-links">
           {navItems.map(item => (
             <button 
               key={item.id}
-              className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+              className={`nav-item ${activeTab === item.id ? 'active' : ''} ${item.id === 'flashcards' ? 'hide-on-mobile' : ''}`}
               onClick={() => setActiveTab(item.id)}
             >
               <item.icon size={20} />
@@ -422,7 +551,7 @@ export default function App() {
           ))}
         </nav>
 
-        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="hide-on-mobile" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
             <ProgressRing width={200} height={90} stroke={14} progress={overallProgress} color="var(--google-blue)" />
@@ -543,7 +672,7 @@ export default function App() {
             )}
           </div>
 
-          <div className="user-profile">
+          <div className="user-profile desktop-only">
             <button className="btn-icon" onClick={() => setIsDarkMode(!isDarkMode)}>
               {isDarkMode ? <Sun size={20} strokeWidth={2.5} /> : <Moon size={20} strokeWidth={2.5} />}
             </button>
@@ -561,6 +690,25 @@ export default function App() {
         </div>
       </main>
 
+      {showMobileWarning && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', backdropFilter: 'blur(8px)' }}>
+          <div className="doodle-panel" style={{ padding: '2.5rem 1.5rem', textAlign: 'center', maxWidth: '380px', width: '90%', border: '4px solid var(--google-red)', boxShadow: '8px 8px 0px var(--google-red)', background: 'var(--panel-bg)' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+              <div style={{ background: 'var(--google-red)', color: 'white', padding: '1.25rem', borderRadius: '50%', border: '3px solid var(--border-dark)', boxShadow: '4px 4px 0px var(--border-dark)' }}>
+                <Monitor size={48} strokeWidth={2.5} />
+              </div>
+            </div>
+            <h3 style={{ fontSize: '1.75rem', marginBottom: '0.75rem', fontWeight: '900', color: 'var(--google-red)' }}>ATTENTION</h3>
+            <p style={{ color: 'var(--text-primary)', fontSize: '1.1rem', marginBottom: '1.5rem', fontWeight: '700', lineHeight: 1.4 }}>
+              WeGrind is strictly designed for larger screens! 
+              <br/><br/>
+              Please open this site on a <strong>PC or Tablet</strong> to access <strong>Flashcards</strong>, <strong>Games</strong>, and the full study experience.
+            </p>
+            <button className="btn-primary" onClick={() => setShowMobileWarning(false)} style={{ width: '100%', padding: '1rem', fontSize: '1.1rem', background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>Got it, I'll switch later</button>
+          </div>
+        </div>
+      )}
+
       {/* Floating Footer Disclaimer */}
       <div style={{ 
         position: 'fixed', 
@@ -575,7 +723,7 @@ export default function App() {
         opacity: 0.7,
         pointerEvents: 'none'
       }}>
-        <p style={{ marginBottom: '0.25rem' }}>⚠️ <strong>Disclaimer:</strong> Verify with official materials.</p>
+
         <p style={{ marginBottom: '0.25rem' }}>© {new Date().getFullYear()} WeGrind.</p>
         <p style={{ pointerEvents: 'auto' }}>Built by <a href="https://github.com/defaultcrosshair" target="_blank" rel="noreferrer" style={{ color: 'var(--text-primary)', textDecoration: 'underline', fontWeight: '800' }}>@defaultcrosshair</a></p>
       </div>

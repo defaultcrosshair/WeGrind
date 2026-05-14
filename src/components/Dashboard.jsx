@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { CheckCircle2, Circle, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronDown, ChevronRight, Star } from 'lucide-react';
 
 function SubjectCard({ subject, index, toggleTopic }) {
   const barWrapperRef = useRef(null);
@@ -70,6 +70,7 @@ function SubjectCard({ subject, index, toggleTopic }) {
         {subject.modules.map((module) => {
           const isExpanded = !!expandedModules[module.id];
           const moduleCompleted = module.topics.every(t => t.completed) && module.topics.length > 0;
+          const importantCount = module.topics.filter(t => t.important).length;
 
           return (
             <div key={module.id} style={{ border: '2px solid var(--border-dark)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
@@ -93,8 +94,20 @@ function SubjectCard({ subject, index, toggleTopic }) {
                     {module.name}
                   </span>
                 </div>
-                <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)' }}>
-                  {module.topics.filter(t => t.completed).length} / {module.topics.length}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {importantCount > 0 && (
+                    <span style={{ 
+                      display: 'flex', alignItems: 'center', gap: '0.2rem',
+                      fontSize: '0.7rem', fontWeight: '800', color: '#f97316',
+                      background: 'rgba(249, 115, 22, 0.12)', padding: '0.15rem 0.4rem',
+                      borderRadius: 'var(--radius-full)', border: '1.5px solid rgba(249, 115, 22, 0.3)'
+                    }}>
+                      <Star size={11} fill="#f97316" stroke="#f97316" /> {importantCount}
+                    </span>
+                  )}
+                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-secondary)' }}>
+                    {module.topics.filter(t => t.completed).length} / {module.topics.length}
+                  </span>
                 </div>
               </div>
 
@@ -106,18 +119,38 @@ function SubjectCard({ subject, index, toggleTopic }) {
                       key={topic.id}
                       onClick={() => toggleTopic(subject.id, module.id, topic.id)}
                       className={`topic-item ${topic.completed ? 'completed' : ''}`}
-                      style={{ border: 'none', boxShadow: 'none', padding: '0.75rem' }}
+                      style={{ 
+                        border: 'none', boxShadow: 'none', padding: '0.75rem',
+                        ...(topic.important && !topic.completed ? { 
+                          background: 'rgba(249, 115, 22, 0.06)',
+                          borderLeft: '3px solid #f97316',
+                          paddingLeft: 'calc(0.75rem - 3px)'
+                        } : {})
+                      }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
                         {topic.completed ? (
                           <CheckCircle2 size={24} className="tick-icon" strokeWidth={3} />
                         ) : (
-                          <Circle color="var(--border-dark)" size={24} strokeWidth={2} />
+                          <Circle color={topic.important ? '#f97316' : 'var(--border-dark)'} size={24} strokeWidth={topic.important ? 2.5 : 2} />
                         )}
                       </div>
-                      <span className={`topic-text ${topic.completed ? 'completed' : ''}`} style={{ fontSize: '0.9rem' }}>
-                        {topic.name}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, minWidth: 0 }}>
+                        <span className={`topic-text ${topic.completed ? 'completed' : ''}`} style={{ fontSize: '0.9rem' }}>
+                          {topic.name}
+                        </span>
+                        {topic.important && !topic.completed && (
+                          <span style={{ 
+                            fontSize: '0.6rem', fontWeight: '800', color: '#f97316',
+                            background: 'rgba(249, 115, 22, 0.15)', padding: '0.1rem 0.35rem',
+                            borderRadius: 'var(--radius-full)', border: '1.5px solid rgba(249, 115, 22, 0.3)',
+                            whiteSpace: 'nowrap', flexShrink: 0, letterSpacing: '0.5px',
+                            textTransform: 'uppercase'
+                          }}>
+                            <Star size={9} fill="#f97316" stroke="#f97316" style={{ flexShrink: 0 }} /> PYQ
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

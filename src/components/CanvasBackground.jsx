@@ -16,7 +16,7 @@ export default function CanvasBackground({ isDarkMode }) {
     const spacing = 24;
     const radius = 1.5;
     // Extremely subtle dot color, adapting to dark mode
-    const color = isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.15)';
+    const color = isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.15)';
     
     // Magnetic parameters
     const maxDistance = 120; // Radius of magnetic effect

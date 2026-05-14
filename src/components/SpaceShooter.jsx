@@ -276,13 +276,13 @@ export default function SpaceShooter({ onClose }) {
       }
 
       // Spawn Meteors
-      const spawnRate = Math.max(8, 30 - Math.floor(currentScore / 25));
+      const spawnRate = Math.max(12, 35 - Math.floor(currentScore / 25));
       if (frames % spawnRate === 0) {
         enemies.push({
           x: Math.random() * (canvas.width - 60) + 30,
           y: -30,
           radius: 15 + Math.random() * 20,
-          speedY: 5 + Math.random() * 4 + (currentScore / 100), // even faster meteors
+          speedY: 3.5 + Math.random() * 3 + (currentScore / 150), // slightly slower meteors
           speedX: (Math.random() - 0.5) * 2.5
         });
       }

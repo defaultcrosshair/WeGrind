@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { Medal, TrendingUp, BookOpen, Gamepad2, Trophy } from 'lucide-react';
 import DoodleAvatar from './DoodleAvatar';
-import { db } from '../firebase';
+import { db, auth, provider } from '../firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import { signInWithPopup } from 'firebase/auth';
 
 export default function Leaderboard({ profileName, avatarParams, userSyllabusPoints, deviceId }) {
   const [filterMode, setFilterMode] = useState('syllabus');
@@ -36,17 +37,23 @@ export default function Leaderboard({ profileName, avatarParams, userSyllabusPoi
     isCurrent: true,
   };
 
-  let mergedData = [...globalData];
-  const userIndex = mergedData.findIndex(u => u.id === deviceId);
-  if (userIndex !== -1) {
-    mergedData[userIndex] = {
-      ...mergedData[userIndex],
-      isCurrent: true,
-      points: userSyllabusPoints,
-      gameScore: gameHighScore
-    };
-  } else {
-    mergedData.push(currentUserObj);
+  const isAnonymous = !deviceId || deviceId.startsWith('user_');
+  let mergedData = globalData.filter(u => !u.id.startsWith('user_'));
+  
+  if (!isAnonymous) {
+    const userIndex = mergedData.findIndex(u => u.id === deviceId);
+    if (userIndex !== -1) {
+      mergedData[userIndex] = {
+        ...mergedData[userIndex],
+        isCurrent: true,
+        points: userSyllabusPoints,
+        gameScore: gameHighScore,
+        avatarParams: avatarParams,
+        name: profileName
+      };
+    } else {
+      mergedData.push(currentUserObj);
+    }
   }
 
   // Sort and assign ranks dynamically
@@ -79,15 +86,35 @@ export default function Leaderboard({ profileName, avatarParams, userSyllabusPoi
     }
   }, [filterMode, globalData.length]);
 
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login Failed", error);
+    }
+  };
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem' }}>
+    <div className="rankboard-layout">
       
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Trophy color="var(--google-yellow)" strokeWidth={3} />
-            Overall Ranking
-          </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem' }}>
+          <div>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+              <Trophy color="var(--google-yellow)" strokeWidth={3} />
+              Overall Ranking
+            </h2>
+            {isAnonymous && (
+              <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <p style={{ margin: 0, color: 'var(--google-red)', fontSize: '0.9rem', fontWeight: '700' }}>
+                  Log in with Google to be part of the leaderboard!
+                </p>
+                <button className="btn-primary" onClick={handleLogin} style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', background: 'var(--google-blue)', color: 'white' }}>
+                  Sign In
+                </button>
+              </div>
+            )}
+          </div>
           
           <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: 'var(--radius-full)', border: '2px solid var(--border-dark)' }}>
             <button 
@@ -135,7 +162,7 @@ export default function Leaderboard({ profileName, avatarParams, userSyllabusPoi
           {mergedData.map((user) => (
             <div 
               key={user.id} 
-              className="doodle-panel"
+              className="doodle-panel leaderboard-row"
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -161,9 +188,9 @@ export default function Leaderboard({ profileName, avatarParams, userSyllabusPoi
                  )}
               </div>
               
-              <div style={{ flex: 1, fontWeight: '700', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {user.name}
-                {user.isCurrent && <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'var(--google-blue)', color: 'white', borderRadius: 'var(--radius-full)' }}>YOU</span>}
+              <div style={{ flex: 1, fontWeight: '700', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
+                {user.isCurrent && <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: 'var(--google-blue)', color: 'white', borderRadius: 'var(--radius-full)', flexShrink: 0 }}>YOU</span>}
               </div>
               
               <div style={{ fontWeight: '800', fontSize: '1.25rem', color: filterMode === 'syllabus' ? 'var(--google-blue)' : 'var(--google-red)' }}>
@@ -174,7 +201,7 @@ export default function Leaderboard({ profileName, avatarParams, userSyllabusPoi
         </div>
       </div>
 
-      <div style={{ paddingTop: '4.5rem' }}>
+      <div className="hide-on-mobile" style={{ paddingTop: '4.5rem' }}>
         <div ref={statsRef} className="doodle-panel" style={{ padding: '2rem', background: 'var(--bg-secondary)' }}>
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Medal color="var(--google-red)" strokeWidth={3} />
